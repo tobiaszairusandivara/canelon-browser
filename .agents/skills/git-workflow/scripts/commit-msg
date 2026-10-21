@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+#
+# commit-msg hook - validates the Conventional Commit header.
+#
+# Installed by .agents/skills/git-workflow/scripts/install-commit-hook.sh
+#
+# Rules:
+#   <type>(<optional scope>): <description>
+#   type       feat fix refactor perf style test docs build ops chore
+#   scope      lowercase, optional
+#   breaking   "!" before the colon
+#   merge      git-generated merge commits are allowed
+#   revert     git-generated revert commits are allowed
+
+set -uo pipefail
+
+MSG_FILE="${1:-}"
+if [[ -z "$MSG_FILE" || ! -f "$MSG_FILE" ]]; then
+  echo "commit-msg: no message file provided" >&2
+  exit 1
+fi
+
+# Skip merge, revert, squash-merge and fixup commits: git generates their messages.
+FIRST_LINE=$(sed -n '1p' "$MSG_FILE")
+if [[ "$FIRST_LINE" =~ ^Merge\ (branch|remote-tracking\ branch|pull\ request)\  ]] \
+  || [[ "$FIRST_LINE" =~ ^Revert\ \" ]] \
+  || [[ "$FIRST_LINE" =~ ^Merge\ tag\  ]] \
+  || [[ "$FIRST_LINE" =~ ^\(cherry\ picked\ from\ commit  ]] \
+  || [[ "$FIRST_LINE" =~ ^fixup!\  ]]; then
+  exit 0
+fi
+
+# Skip empty messages (git handles those separately).
+if [[ -z "${FIRST_LINE// }" ]]; then
+  exit 0
+fi
+
+TYPE_REGEX='feat|fix|refactor|perf|style|test|docs|build|ops|chore'
+SCOPE_REGEX='[a-z0-9._/-]+'
+DESC_REGEX='.{1,100}'
+
+HEADER_REGEX="^(${TYPE_REGEX})(\(${SCOPE_REGEX}\))?!?: (${DESC_REGEX})$"
+
+if [[ ! "$FIRST_LINE" =~ $HEADER_REGEX ]]; then
+  cat >&2 <<EOF
+
+commit-msg: invalid commit message header.
+
+  got:      $FIRST_LINE
+  expected: <type>(<scope>): <description>
+
+  types:    feat fix refactor perf style test docs build ops chore
+  scope:    optional, lowercase (desktop core contracts agent mock-server docker openspec docs ci repo)
+  rules:    imperative mood, lowercase start, no trailing period, max 100 chars
+  breaking: use "!" before the colon and add a "BREAKING CHANGE:" footer
+
+  example:  feat(desktop): validate ports against the allowlist
+  example:  fix(agent): refresh the session token before expiry
+
+  Full reference: .agents/skills/git-workflow/references/commit-conventions.md
+
+EOF
+  exit 1
+fi
+
+exit 0

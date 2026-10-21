@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["docs/APP_CONTEXT.md"],
+  "permission": {
+    "skill": {
+      "*": "allow",
+      "git-workflow": "allow"
+    }
+  }
+}

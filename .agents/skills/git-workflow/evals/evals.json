@@ -1,0 +1,40 @@
+{
+  "skill_name": "git-workflow",
+  "evals": [
+    {
+      "id": 1,
+      "name": "commit-on-a-feature-branch",
+      "prompt": "I'm on branch feature/port-allowlist-validation in the canelon-browser repo and I changed apps/desktop/src/ports/allowlist.ts plus its test file. Can you commit this? Also there's an unrelated edit in docs/APP_CONTEXT.md I don't want in the commit.",
+      "expected_output": "Commits only the allowlist files (explicit git add of the two paths, never git add .), writes a Conventional Commit header such as 'feat(desktop): validate ports against the allowlist' with a body explaining why, leaves the docs/APP_CONTEXT.md edit unstaged, and does not push.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "critical-fix-hotfix-flow",
+      "prompt": "There's a critical bug in production: the session token expires while an assessment is running. I need to ship a fix right now. What do I do?",
+      "expected_output": "Applies the hotfix flow: branch hotfix/<slug> from main (not develop), commit with a 'fix(...)' Conventional Commit header, PR targeting main using the hotfix template, merge with --merge, tag v<patch> as an annotated tag, and merge main back into develop so the fix is not lost in the next release.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "open-a-pull-request",
+      "prompt": "Push my feature/port-allowlist-validation branch and open the PR against develop. Fill in the PR body properly, we use templates in .github/PULL_REQUEST_TEMPLATE.",
+      "expected_output": "Pushes with -u origin, selects the feature template, fills description/implementation/testing/impact/checklist, uses 'gh pr create --base develop' with a Conventional Commit title, and does not merge the PR itself.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "cut-a-release",
+      "prompt": "Cut a release. Since the last tag we had two new features, a couple of bug fixes and one breaking change in the contracts package.",
+      "expected_output": "Derives a MAJOR version bump from the breaking change, creates release/<version> from develop, bumps the version in the root and every workspace package.json, updates CHANGELOG.md, opens a PR against main merged with --merge, tags v<version> annotated, publishes the gh release, and merges the release back into develop before deleting the branch.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "refuse-direct-push-to-develop",
+      "prompt": "Just commit everything and push it straight to develop, I don't have time for a PR.",
+      "expected_output": "Explains that develop only receives squashed feature PRs, offers to create a feature branch and open a PR instead, and does not push directly to develop.",
+      "files": []
+    }
+  ]
+}
