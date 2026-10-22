@@ -3,15 +3,22 @@
 Run the whole list on desktop VS Code and on code-server. Every step that
 fails is a bug to report.
 
-## 0. Install
+## 0. Install and open
 
-- [ ] The panel opens with **Canelón Browser: Open** from the Command Palette.
-- [ ] The panel opens next to the editor and the toolbar shows Back, Forward,
-      Reload, Home, the address bar and the external-browser button.
+- [ ] The extension appears in the **activity bar** (the bar on the left), with
+      the icon of a globe.
+- [ ] Clicking the icon opens the browser in the sidebar, with the toolbar:
+      Back, Forward, Reload, Home, the address bar and the external-browser
+      button.
+- [ ] **Canelón Browser: Open** in the Command Palette focuses exactly the
+      same view: the icon and the command do the same thing.
+- [ ] The page loads: the indicator of loading disappears and the page of the
+      home page is visible inside the frame. **If the indicator stays, the
+      browser did not load anything: take a screenshot and open the developer
+      tools of the webview.**
 - [ ] The toolbar uses the theme of the editor (VS Code CSS variables) and the
       Codicon glyphs are rendered, not empty squares.
-- [ ] The command a second time reuses the same panel instead of opening a
-      second one.
+- [ ] The view can be dragged into the editor area and keeps working.
 
 ## 1. Search routing
 
@@ -76,7 +83,7 @@ Set `canelonBrowser.securityPolicy` to `strict` and
 
 ## 5. Desktop VS Code
 
-- [ ] The panel survives switching tabs and coming back (the page is not
+- [ ] The view survives switching tabs and coming back (the page is not
       reloaded from scratch).
 - [ ] Reloading the window keeps the extension working: the command opens the
       panel again.
@@ -84,7 +91,8 @@ Set `canelonBrowser.securityPolicy` to `strict` and
 
 ## 6. code-server (remote web)
 
-- [ ] The command opens the panel in the browser of the user.
+- [ ] The icon of the activity bar opens the browser in the browser of the
+      user.
 - [ ] A page reachable from the internet loads.
 - [ ] `http://localhost:3000` in the frame points at the machine of the
       **user**, not at the container: confirm it in the panel and remember
@@ -94,6 +102,8 @@ Set `canelonBrowser.securityPolicy` to `strict` and
 
 ## 7. Regression
 
-- [ ] `npm run verify` passes (typecheck, unit tests, build).
-- [ ] `npm test` runs the SecurityManager, NavigationHistory, IPC and
-      frameability suites.
+- [ ] `npm run verify` passes (typecheck, lint, unit tests, build).
+- [ ] `npm test` runs the SecurityManager, NavigationHistory, IPC, frameability,
+      webview client and webview styles suites.
+- [ ] `npm run test:cov` keeps the coverage thresholds of the repository
+      (80/80/80/70).

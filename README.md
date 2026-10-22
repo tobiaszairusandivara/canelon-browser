@@ -1,10 +1,10 @@
 # Canelón Browser
 
-A browser that lives inside a VS Code panel.
+A browser that lives inside VS Code, in the activity bar.
 
 The VS Code webview is already a Chromium instance, so the extension does not
 ship a browser, a headless Chrome or any runtime dependency: it renders the
-page in an `iframe` inside a webview panel and drives it with a small toolbar.
+page in an `iframe` inside a webview view and drives it with a small toolbar.
 
 - **Zero runtime dependencies.** Only devDependencies (`typescript`, `esbuild`,
   `vitest`, `@types/vscode`, `@vscode/vsce`).
@@ -16,14 +16,23 @@ page in an `iframe` inside a webview panel and drives it with a small toolbar.
 - **Navigation history.** The extension keeps the history on its side, because
   a cross-origin frame cannot be inspected from the extension host.
 
+## Where the browser lives
+
+The extension contributes a container to the **activity bar**, on the left of
+the editor, with the icon of a globe. Clicking it opens the browser in the
+sidebar, exactly like the views of most of the extensions.
+
+The view can be dragged into the editor area when a wider surface is
+preferred.
+
 ## Commands
 
 | Command               | Palette                   |
 | :-------------------- | :------------------------ |
 | `canelonBrowser.open` | **Canelón Browser: Open** |
 
-The command opens the panel next to the current editor and reuses it on the
-next invocation.
+The command focuses the view of the activity bar, so the icon of the bar and
+the command do exactly the same thing.
 
 ## Settings
 
@@ -32,7 +41,7 @@ next invocation.
 | `canelonBrowser.allowlist`      | `string[]`         | `[]`                               | Patterns the browser may load.                                                   |
 | `canelonBrowser.securityPolicy` | `strict` \| `open` | `open`                             | `strict` blocks everything that is not allowlisted.                              |
 | `canelonBrowser.searchEngine`   | `string`           | `https://www.bing.com/search?q=%s` | Template used for text that is not a URL. `%s` is replaced by the encoded query. |
-| `canelonBrowser.homeUrl`        | `string`           | `https://www.wikipedia.org`        | Page loaded when the panel opens and when Home is pressed.                       |
+| `canelonBrowser.homeUrl`        | `string`           | `https://www.wikipedia.org`        | Page loaded when the view opens and when Home is pressed.                        |
 
 ### Allowlist patterns
 
@@ -94,18 +103,22 @@ The project layout:
 
 ```text
 src/
-├── extension.ts        # activation, command registration
-├── BrowserPanel.ts     # panel, policy enforcement, history, IPC
-├── SecurityManager.ts  # pure URL validation, allowlist and CSP generation
-├── ConfigManager.ts    # typed access to the settings
-├── NavigationHistory.ts# pure extension-side history
-├── Frameability.ts     # heuristic X-Frame-Options / frame-ancestors probe
-├── types.ts            # discriminated unions and message validators
-└── webview/            # index.html, main.ts, styles.css
+├── extension.ts          # activation, command and view registration
+├── BrowserViewProvider.ts# the view of the activity bar
+├── BrowserSession.ts     # state, policy enforcement, history and IPC
+├── SecurityManager.ts    # pure URL validation, allowlist and CSP generation
+├── ConfigManager.ts      # typed access to the settings
+├── NavigationHistory.ts  # pure extension-side history
+├── Frameability.ts       # heuristic X-Frame-Options / frame-ancestors probe
+├── types.ts              # discriminated unions and message validators
+└── webview/              # index.html, main.ts, styles.css
 ```
 
 `SecurityManager.ts`, `NavigationHistory.ts`, `Frameability.ts` and `types.ts`
-never import `vscode`, so they are unit tested directly with Vitest.
+never import `vscode`, so they are unit tested directly with Vitest. The
+client of the webview is covered by an integration test that runs the real
+bundle in jsdom, because the messages of the host arrive with a source that
+is not reachable from the webview.
 
 The extension has **no runtime dependency**: the validation of the messages and
 of the URLs is written with discriminated unions instead of a schema library,

@@ -94,8 +94,12 @@ name or a port that the user can reach, and add that host to the allowlist.
 
 ## Other limitations
 
-- The panel keeps a single browser instance; there are no tabs and no
-  separate windows.
+- The browser lives in a view of the activity bar, so it is as wide as the
+  sidebar. The view can be dragged into the editor area for a wider surface.
+- The webview of VS Code runs in a sandbox without `allow-popups`, so the
+  popups of the framed page are blocked.
+- There is a single browser instance; there are no tabs and no separate
+  windows.
 - The `Open in External Browser` action needs a system browser. In a remote
   web session it opens the browser of the user.
 - Only `http:` and `https:` are loaded. `file:`, `ftp:`, `data:` and
