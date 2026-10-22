@@ -2,22 +2,17 @@ import { randomBytes } from 'node:crypto';
 
 import * as vscode from 'vscode';
 
-import { BrowserConfig, ConfigManager } from './ConfigManager';
-import { FrameabilityResult, probeFrameability } from './Frameability';
+import { type BrowserConfig, type ConfigManager } from './ConfigManager';
+import { type FrameabilityResult, probeFrameability } from './Frameability';
 import { NavigationHistory } from './NavigationHistory';
 import {
   FRAME_LOAD_TIMEOUT_MS,
-  HostMessage,
-  PanelInitState,
-  WebviewMessage,
+  type HostMessage,
+  type PanelInitState,
+  type WebviewMessage,
   parseWebviewMessage,
 } from './types';
-import {
-  buildFrameSrc,
-  isAllowedByPolicy,
-  parseHttpUrl,
-  resolveTarget,
-} from './SecurityManager';
+import { buildFrameSrc, isAllowedByPolicy, parseHttpUrl, resolveTarget } from './SecurityManager';
 
 const VIEW_TYPE = 'canelonBrowser.panel';
 
@@ -86,9 +81,13 @@ export class BrowserPanel {
   }
 
   private async initialize(): Promise<void> {
-    this.panel.webview.onDidReceiveMessage((raw: unknown) => {
-      void this.handleMessage(raw);
-    }, null, this.disposables);
+    this.panel.webview.onDidReceiveMessage(
+      (raw: unknown) => {
+        void this.handleMessage(raw);
+      },
+      null,
+      this.disposables,
+    );
 
     this.disposables.push(
       this.configManager.onDidChange(() => {
@@ -96,9 +95,13 @@ export class BrowserPanel {
       }),
     );
 
-    this.panel.onDidDispose(() => {
-      this.dispose();
-    }, null, this.disposables);
+    this.panel.onDidDispose(
+      () => {
+        this.dispose();
+      },
+      null,
+      this.disposables,
+    );
 
     const home = this.config.homeUrl;
     const validation = parseHttpUrl(home);
@@ -141,7 +144,8 @@ export class BrowserPanel {
       vscode.Uri.joinPath(this.extensionUri, 'dist', 'webview', 'index.html'),
     );
 
-    return new TextDecoder().decode(template)
+    return new TextDecoder()
+      .decode(template)
       .replaceAll('__CSP__', csp)
       .replaceAll('__NONCE__', nonce)
       .replaceAll('__STYLE_URI__', stylesUri)

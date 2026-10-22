@@ -74,14 +74,14 @@ purpose.
 
 In code-server the split is:
 
-| Part | Runs on |
-| :--- | :--- |
-| The extension host | The container (or the remote machine). |
-| The webview and the `iframe` | The browser of the user. |
+| Part                         | Runs on                                |
+| :--------------------------- | :------------------------------------- |
+| The extension host           | The container (or the remote machine). |
+| The webview and the `iframe` | The browser of the user.               |
 
 Because the frame runs in the browser of the user, **`localhost` inside the
 embedded browser is the machine of the user, not the container**. A service
-listening on `localhost:3000` inside the container is *not* reachable from the
+listening on `localhost:3000` inside the container is _not_ reachable from the
 frame, while the same address on the machine of the user may be reachable (or
 may be a completely different service).
 

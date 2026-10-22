@@ -49,7 +49,11 @@ export function evaluateFrameHeaders(headers: HeaderBag): FrameabilityResult {
   const xfo = readHeader(headers, 'x-frame-options');
   if (xfo !== undefined) {
     const normalized = xfo.trim().toUpperCase();
-    if (normalized.includes('DENY') || normalized.includes('SAMEORIGIN') || normalized.includes('ALLOW-FROM')) {
+    if (
+      normalized.includes('DENY') ||
+      normalized.includes('SAMEORIGIN') ||
+      normalized.includes('ALLOW-FROM')
+    ) {
       return {
         verdict: 'blocked',
         detail: `The server sends "X-Frame-Options: ${xfo.trim()}", so the page is very likely refused inside a frame.`,
@@ -64,13 +68,15 @@ export function evaluateFrameHeaders(headers: HeaderBag): FrameabilityResult {
     if (sources.includes("'none'")) {
       return {
         verdict: 'blocked',
-        detail: 'The server sends a "Content-Security-Policy: frame-ancestors \'none\'" directive, so the page cannot be framed.',
+        detail:
+          'The server sends a "Content-Security-Policy: frame-ancestors \'none\'" directive, so the page cannot be framed.',
       };
     }
     if (sources.includes("'self'")) {
       return {
         verdict: 'blocked',
-        detail: 'The server sends a "Content-Security-Policy: frame-ancestors \'self\'" directive, so the page can only be framed by itself.',
+        detail:
+          'The server sends a "Content-Security-Policy: frame-ancestors \'self\'" directive, so the page can only be framed by itself.',
       };
     }
     if (sources.length > 0 && !sources.includes('*')) {
@@ -83,7 +89,8 @@ export function evaluateFrameHeaders(headers: HeaderBag): FrameabilityResult {
 
   return {
     verdict: 'allowed',
-    detail: 'The response headers do not block framing, although the page may still refuse to load for other reasons.',
+    detail:
+      'The response headers do not block framing, although the page may still refuse to load for other reasons.',
   };
 }
 

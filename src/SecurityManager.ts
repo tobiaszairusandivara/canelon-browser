@@ -255,8 +255,7 @@ export function isAllowedByPolicy(
 
   return {
     allowed: false,
-    reason:
-      `The security policy is "strict" and "${url.href}" does not match any allowlist pattern.`,
+    reason: `The security policy is "strict" and "${url.href}" does not match any allowlist pattern.`,
   };
 }
 
@@ -343,7 +342,9 @@ export function buildSearchUrl(template: string, query: string): UrlValidation {
 export function resolveTarget(
   input: string,
   searchTemplate: string,
-): { readonly ok: true; readonly url: URL; readonly kind: 'url' | 'search' } | { readonly ok: false; readonly reason: string } {
+):
+  | { readonly ok: true; readonly url: URL; readonly kind: 'url' | 'search' }
+  | { readonly ok: false; readonly reason: string } {
   const classification = classifyInput(input);
 
   if (classification.kind === 'url') {

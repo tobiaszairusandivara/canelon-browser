@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { SecurityPolicy, parseHttpUrl } from './SecurityManager';
+import { type SecurityPolicy, parseHttpUrl } from './SecurityManager';
 
 export const CONFIG_SECTION = 'canelonBrowser';
 
@@ -71,7 +71,9 @@ export function normalizeConfig(raw: {
   homeUrl?: unknown;
 }): BrowserConfig {
   const allowlist = Array.isArray(raw.allowlist)
-    ? raw.allowlist.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+    ? raw.allowlist.filter(
+        (entry): entry is string => typeof entry === 'string' && entry.trim().length > 0,
+      )
     : DEFAULT_CONFIG.allowlist;
 
   const securityPolicy: SecurityPolicy =

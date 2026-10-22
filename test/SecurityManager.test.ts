@@ -34,7 +34,15 @@ describe('parseHttpUrl', () => {
   });
 
   it('rejects malformed URLs', () => {
-    for (const input of ['', '   ', 'http://', 'https://', 'http://exa mple.com', ':::', 'http://[bad']) {
+    for (const input of [
+      '',
+      '   ',
+      'http://',
+      'https://',
+      'http://exa mple.com',
+      ':::',
+      'http://[bad',
+    ]) {
       expect(parseHttpUrl(input).ok, input).toBe(false);
     }
   });
@@ -87,15 +95,30 @@ describe('parseAllowlistPattern', () => {
 
 describe('matchesAllowlistPattern', () => {
   it('matches a wildcard host on subdomains and on the apex', () => {
-    expect(matchesAllowlistPattern(new URL('https://wiki.internal.company.com'), '*.internal.company.com')).toBe(true);
-    expect(matchesAllowlistPattern(new URL('https://internal.company.com'), '*.internal.company.com')).toBe(true);
-    expect(matchesAllowlistPattern(new URL('https://evil.com'), '*.internal.company.com')).toBe(false);
-    expect(matchesAllowlistPattern(new URL('https://notinternal.company.com'), '*.internal.company.com')).toBe(false);
+    expect(
+      matchesAllowlistPattern(
+        new URL('https://wiki.internal.company.com'),
+        '*.internal.company.com',
+      ),
+    ).toBe(true);
+    expect(
+      matchesAllowlistPattern(new URL('https://internal.company.com'), '*.internal.company.com'),
+    ).toBe(true);
+    expect(matchesAllowlistPattern(new URL('https://evil.com'), '*.internal.company.com')).toBe(
+      false,
+    );
+    expect(
+      matchesAllowlistPattern(new URL('https://notinternal.company.com'), '*.internal.company.com'),
+    ).toBe(false);
   });
 
   it('matches an exact host only', () => {
-    expect(matchesAllowlistPattern(new URL('https://docs.python.org/3'), 'docs.python.org')).toBe(true);
-    expect(matchesAllowlistPattern(new URL('https://blog.python.org/3'), 'docs.python.org')).toBe(false);
+    expect(matchesAllowlistPattern(new URL('https://docs.python.org/3'), 'docs.python.org')).toBe(
+      true,
+    );
+    expect(matchesAllowlistPattern(new URL('https://blog.python.org/3'), 'docs.python.org')).toBe(
+      false,
+    );
   });
 
   it('matches any port with a port wildcard', () => {
@@ -110,17 +133,33 @@ describe('matchesAllowlistPattern', () => {
   });
 
   it('honours the scheme of the pattern', () => {
-    expect(matchesAllowlistPattern(new URL('https://docs.python.org/3'), 'https://docs.python.org/*')).toBe(true);
-    expect(matchesAllowlistPattern(new URL('http://docs.python.org/3'), 'https://docs.python.org/*')).toBe(false);
+    expect(
+      matchesAllowlistPattern(new URL('https://docs.python.org/3'), 'https://docs.python.org/*'),
+    ).toBe(true);
+    expect(
+      matchesAllowlistPattern(new URL('http://docs.python.org/3'), 'https://docs.python.org/*'),
+    ).toBe(false);
   });
 
   it('honours the path prefix of the pattern', () => {
-    expect(matchesAllowlistPattern(new URL('https://docs.python.org/3/tutorial'), 'https://docs.python.org/3/*')).toBe(true);
-    expect(matchesAllowlistPattern(new URL('https://docs.python.org/blog'), 'https://docs.python.org/3/*')).toBe(false);
+    expect(
+      matchesAllowlistPattern(
+        new URL('https://docs.python.org/3/tutorial'),
+        'https://docs.python.org/3/*',
+      ),
+    ).toBe(true);
+    expect(
+      matchesAllowlistPattern(
+        new URL('https://docs.python.org/blog'),
+        'https://docs.python.org/3/*',
+      ),
+    ).toBe(false);
   });
 
   it('treats a trailing wildcard as "any path"', () => {
-    expect(matchesAllowlistPattern(new URL('https://docs.python.org/blog'), 'https://docs.python.org/*')).toBe(true);
+    expect(
+      matchesAllowlistPattern(new URL('https://docs.python.org/blog'), 'https://docs.python.org/*'),
+    ).toBe(true);
   });
 
   it('accepts both schemes when the pattern has none', () => {
@@ -141,9 +180,15 @@ describe('isAllowedByPolicy', () => {
   });
 
   it('only allows allowlisted URLs in the strict policy', () => {
-    expect(isAllowedByPolicy(new URL('https://wiki.internal.company.com'), allowlist, 'strict').allowed).toBe(true);
-    expect(isAllowedByPolicy(new URL('http://localhost:3000'), allowlist, 'strict').allowed).toBe(true);
-    expect(isAllowedByPolicy(new URL('https://example.com'), allowlist, 'strict').allowed).toBe(false);
+    expect(
+      isAllowedByPolicy(new URL('https://wiki.internal.company.com'), allowlist, 'strict').allowed,
+    ).toBe(true);
+    expect(isAllowedByPolicy(new URL('http://localhost:3000'), allowlist, 'strict').allowed).toBe(
+      true,
+    );
+    expect(isAllowedByPolicy(new URL('https://example.com'), allowlist, 'strict').allowed).toBe(
+      false,
+    );
   });
 
   it('explains why a URL was refused', () => {

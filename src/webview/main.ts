@@ -1,5 +1,5 @@
 import { parseHttpUrl } from '../SecurityManager';
-import { HostMessage, WebviewMessage, parseHostMessage } from '../types';
+import { type HostMessage, type WebviewMessage, parseHostMessage } from '../types';
 
 interface VsCodeApi {
   postMessage(message: unknown): void;
@@ -63,7 +63,11 @@ function clearNotice(): void {
   noticeUrl = undefined;
 }
 
-function showNotice(level: 'info' | 'warning' | 'error', message: string, actionUrl?: string): void {
+function showNotice(
+  level: 'info' | 'warning' | 'error',
+  message: string,
+  actionUrl?: string,
+): void {
   noticeElement.hidden = false;
   noticeElement.className = `notice level-${level}`;
   noticeElement.textContent = message;
