@@ -1,6 +1,6 @@
 {
   "name": "embedded-browser",
-  "displayName": "Canelón Browser",
+  "displayName": "Canel\u00f3n Browser",
   "description": "Opens a browser inside a VS Code webview panel with an allowlist, a configurable search engine and extension-side navigation history.",
   "version": "0.1.0",
   "publisher": "canelon",
@@ -35,15 +35,72 @@
       {
         "command": "canelonBrowser.open",
         "title": "Open",
-        "category": "Canelón Browser",
+        "category": "Canel\u00f3n Browser",
         "icon": "$(preview)"
+      },
+      {
+        "command": "canelonBrowser.back",
+        "title": "Back",
+        "category": "Canel\u00f3n Browser",
+        "icon": "$(arrow-left)"
+      },
+      {
+        "command": "canelonBrowser.forward",
+        "title": "Forward",
+        "category": "Canel\u00f3n Browser",
+        "icon": "$(arrow-right)"
+      },
+      {
+        "command": "canelonBrowser.reload",
+        "title": "Reload",
+        "category": "Canel\u00f3n Browser",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "canelonBrowser.focusAddressBar",
+        "title": "Focus the Address Bar",
+        "category": "Canel\u00f3n Browser",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "canelonBrowser.openDeveloperTools",
+        "title": "Open Developer Tools",
+        "category": "Canel\u00f3n Browser",
+        "icon": "$(debug-console)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "canelonBrowser.openDeveloperTools",
+        "key": "f12",
+        "when": "canelonBrowser.focused"
+      },
+      {
+        "command": "canelonBrowser.focusAddressBar",
+        "key": "ctrl+l",
+        "when": "canelonBrowser.focused && canelonBrowser.desktop"
+      },
+      {
+        "command": "canelonBrowser.reload",
+        "key": "ctrl+r",
+        "when": "canelonBrowser.focused && canelonBrowser.desktop"
+      },
+      {
+        "command": "canelonBrowser.back",
+        "key": "alt+left",
+        "when": "canelonBrowser.focused && canelonBrowser.desktop"
+      },
+      {
+        "command": "canelonBrowser.forward",
+        "key": "alt+right",
+        "when": "canelonBrowser.focused && canelonBrowser.desktop"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
           "id": "canelonBrowser",
-          "title": "Canelón Browser",
+          "title": "Canel\u00f3n Browser",
           "icon": "images/icon.svg"
         }
       ]
@@ -54,12 +111,12 @@
           "id": "canelonBrowser.browser",
           "name": "Browser",
           "type": "webview",
-          "contextualTitle": "Canelón Browser"
+          "contextualTitle": "Canel\u00f3n Browser"
         }
       ]
     },
     "configuration": {
-      "title": "Canelón Browser",
+      "title": "Canel\u00f3n Browser",
       "properties": {
         "canelonBrowser.allowlist": {
           "type": "array",

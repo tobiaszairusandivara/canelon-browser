@@ -51,6 +51,8 @@ export type HostMessage =
       readonly blockedReason?: string | undefined;
     }
   | { readonly type: 'status'; readonly status: 'loading' | 'idle' }
+  /** Asks the client to put the caret in the address bar. */
+  | { readonly type: 'focusAddressBar' }
   | {
       readonly type: 'notice';
       readonly level: NoticeLevel;
@@ -91,7 +93,11 @@ export type WebviewMessage =
   | { readonly type: 'home' }
   | { readonly type: 'openExternal'; readonly url?: string }
   | { readonly type: 'frameLoaded'; readonly url: string }
-  | { readonly type: 'frameTimeout'; readonly url: string };
+  | { readonly type: 'frameTimeout'; readonly url: string }
+  /** The frame of the page has the focus, so the keyboard is inside the page. */
+  | { readonly type: 'frameFocus' }
+  /** The frame of the page lost the focus. */
+  | { readonly type: 'frameBlur' };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -177,6 +183,9 @@ export function parseHostMessage(value: unknown): HostMessage | undefined {
         return undefined;
       }
       return { type: 'status', status };
+    }
+    case 'focusAddressBar': {
+      return { type: 'focusAddressBar' };
     }
     case 'notice': {
       const { level, message, action, url } = value;
@@ -279,6 +288,12 @@ export function parseWebviewMessage(value: unknown): WebviewMessage | undefined 
         return undefined;
       }
       return { type: value['type'], url };
+    }
+    case 'frameFocus': {
+      return { type: 'frameFocus' };
+    }
+    case 'frameBlur': {
+      return { type: 'frameBlur' };
     }
     default:
       return undefined;

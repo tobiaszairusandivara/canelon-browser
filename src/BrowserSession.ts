@@ -15,6 +15,14 @@ import {
 import { buildFrameSrc, isAllowedByPolicy, parseHttpUrl, resolveTarget } from './SecurityManager';
 
 /**
+ * The context key that tells whether the keyboard is inside the page.
+ *
+ * VS Code does not expose a context key for the focus of a webview, so the
+ * extension sets its own and the keybindings use it.
+ */
+export const FOCUS_CONTEXT_KEY = 'canelonBrowser.focused';
+
+/**
  * The state of the browser: the history, the current URL and the policy.
  *
  * The logic lives here and not in the view provider, so it can be reasoned
@@ -174,7 +182,7 @@ export class BrowserSession {
         return;
       }
       case 'reload': {
-        this.reload();
+        this.reloadCurrent();
         return;
       }
       case 'home': {
@@ -190,6 +198,14 @@ export class BrowserSession {
       }
       case 'frameTimeout': {
         await this.reportSuspectedBlock(message.url);
+        return;
+      }
+      case 'frameFocus': {
+        this.onFocusChanged(true);
+        return;
+      }
+      case 'frameBlur': {
+        this.onFocusChanged(false);
         return;
       }
       default:
@@ -209,6 +225,34 @@ export class BrowserSession {
       ...(decision.reason !== undefined ? { blockedReason: decision.reason } : {}),
     };
     this.post({ type: 'init', state });
+  }
+
+  /**
+   * Called when the page takes the focus, so the extension knows that the
+   * keyboard is inside the frame.
+   */
+  private onFocusChanged(focused: boolean): void {
+    void vscode.commands.executeCommand('setContext', FOCUS_CONTEXT_KEY, focused);
+  }
+
+  /** Moves the caret to the address bar. */
+  public focusAddressBar(): void {
+    this.post({ type: 'focusAddressBar' });
+  }
+
+  /** Goes back in the history. */
+  public back(): void {
+    this.goBack();
+  }
+
+  /** Goes forward in the history. */
+  public forward(): void {
+    this.goForward();
+  }
+
+  /** Loads the current URL again. */
+  public reload(): void {
+    this.reloadCurrent();
   }
 
   private async navigateFromInput(input: string): Promise<void> {
@@ -286,7 +330,7 @@ export class BrowserSession {
     void this.inspectFrameability(url);
   }
 
-  private reload(): void {
+  private reloadCurrent(): void {
     if (this.currentUrl.length === 0) {
       return;
     }
