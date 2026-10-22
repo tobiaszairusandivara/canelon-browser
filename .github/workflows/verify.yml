@@ -1,0 +1,46 @@
+name: verify
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [develop]
+
+jobs:
+  verify:
+    name: typecheck, lint, test and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install the dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test with the coverage thresholds
+        run: npm run test:cov
+
+      - name: Build
+        run: npm run build
+
+      - name: Package the extension
+        run: npx vsce package
+
+      - name: Publish the packaged extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: canelon-browser-vsix
+          path: '*.vsix'
