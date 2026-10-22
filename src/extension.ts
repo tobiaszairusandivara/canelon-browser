@@ -1,42 +1,39 @@
 import * as vscode from 'vscode';
 
-import { BrowserPanel } from './BrowserPanel';
+import { BrowserSession } from './BrowserSession';
+import { BrowserViewProvider } from './BrowserViewProvider';
 import { ConfigManager } from './ConfigManager';
 
-let panel: BrowserPanel | undefined;
+export const VIEW_ID = 'canelonBrowser.browser';
 
 /**
  * Entry point of the extension host.
  *
- * The panel is created lazily and reused, so the command always reveals the
- * same browser instead of opening a new one on every invocation.
+ * The browser lives in a view of the activity bar. The command of the
+ * extension focuses that view, so the icon of the activity bar and the
+ * command do exactly the same thing.
  */
 export function activate(context: vscode.ExtensionContext): void {
   const configManager = new ConfigManager();
   context.subscriptions.push(configManager);
 
+  const session = new BrowserSession(context.extensionUri, configManager);
+  const provider = new BrowserViewProvider(session, context.extensionUri);
+  context.subscriptions.push(provider);
+
   context.subscriptions.push(
-    vscode.commands.registerCommand('canelonBrowser.open', async (argument?: unknown) => {
-      const initialUrl = typeof argument === 'string' ? argument : undefined;
+    vscode.window.registerWebviewViewProvider(VIEW_ID, provider, {
+      webviewOptions: { retainContextWhenHidden: true },
+    }),
+  );
 
-      if (panel && !panel.isDisposed) {
-        panel.reveal();
-        if (initialUrl !== undefined) {
-          await panel.navigate(initialUrl);
-        }
-        return;
-      }
-
-      panel = await BrowserPanel.create(context.extensionUri, configManager);
-      panel.reveal();
-      if (initialUrl !== undefined) {
-        await panel.navigate(initialUrl);
-      }
+  context.subscriptions.push(
+    vscode.commands.registerCommand('canelonBrowser.open', async () => {
+      await vscode.commands.executeCommand(`${VIEW_ID}.focus`);
     }),
   );
 }
 
 export function deactivate(): void {
-  panel?.dispose();
-  panel = undefined;
+  // Everything is disposed through the subscriptions of the context.
 }

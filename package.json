@@ -39,6 +39,25 @@
         "icon": "$(preview)"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "canelonBrowser",
+          "title": "Canel\u00f3n Browser",
+          "icon": "images/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "canelonBrowser": [
+        {
+          "id": "canelonBrowser.browser",
+          "name": "Browser",
+          "type": "webview",
+          "contextualTitle": "Canel\u00f3n Browser"
+        }
+      ]
+    },
     "configuration": {
       "title": "Canel\u00f3n Browser",
       "properties": {

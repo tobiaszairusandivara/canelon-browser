@@ -14,113 +14,83 @@ import {
 } from './types';
 import { buildFrameSrc, isAllowedByPolicy, parseHttpUrl, resolveTarget } from './SecurityManager';
 
-const VIEW_TYPE = 'canelonBrowser.panel';
-
 /**
- * Owns the webview panel, the extension-side navigation history and the
- * policy enforcement that guards every navigation.
+ * The state of the browser: the history, the current URL and the policy.
+ *
+ * The logic lives here and not in the view provider, so it can be reasoned
+ * about apart from the VS Code API.
  */
-export class BrowserPanel {
+export class BrowserSession {
   private readonly history = new NavigationHistory();
-  private readonly disposables: vscode.Disposable[] = [];
   private currentUrl = '';
-  private disposed = false;
+  private webview: vscode.Webview | undefined;
 
-  private constructor(
-    private readonly panel: vscode.WebviewPanel,
+  constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly configManager: ConfigManager,
   ) {}
 
-  public static async create(
-    extensionUri: vscode.Uri,
-    configManager: ConfigManager,
-  ): Promise<BrowserPanel> {
-    const panel = vscode.window.createWebviewPanel(
-      VIEW_TYPE,
-      'Canelón Browser',
-      { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true,
-        localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'dist', 'webview')],
-      },
-    );
-
-    const browser = new BrowserPanel(panel, extensionUri, configManager);
-    await browser.initialize();
-    return browser;
+  public get url(): string {
+    return this.currentUrl;
   }
 
-  public get isDisposed(): boolean {
-    return this.disposed;
+  public get canGoBack(): boolean {
+    return this.history.canGoBack;
   }
 
-  public reveal(): void {
-    this.panel.reveal(this.panel.viewColumn, true);
-  }
-
-  /** Loads a URL in the panel, applying the policy. */
-  public async navigate(target: string): Promise<void> {
-    await this.navigateTo(target);
-  }
-
-  public dispose(): void {
-    if (this.disposed) {
-      return;
-    }
-    this.disposed = true;
-    for (const disposable of this.disposables) {
-      disposable.dispose();
-    }
-    this.panel.dispose();
+  public get canGoForward(): boolean {
+    return this.history.canGoForward;
   }
 
   private get config(): BrowserConfig {
     return this.configManager.config;
   }
 
-  private async initialize(): Promise<void> {
-    this.panel.webview.onDidReceiveMessage(
-      (raw: unknown) => {
-        void this.handleMessage(raw);
-      },
-      null,
-      this.disposables,
-    );
+  /**
+   * Prepares a webview: builds its HTML with the CSP of the allowlist, wires
+   * its messages and keeps the state of the browser.
+   */
+  public async attach(webview: vscode.Webview): Promise<void> {
+    this.webview = webview;
+    webview.html = await this.buildHtml(webview);
 
-    this.disposables.push(
-      this.configManager.onDidChange(() => {
-        void this.onConfigurationChanged();
-      }),
-    );
+    webview.onDidReceiveMessage((raw: unknown) => {
+      void this.handleMessage(raw);
+    });
 
-    this.panel.onDidDispose(
-      () => {
-        this.dispose();
-      },
-      null,
-      this.disposables,
-    );
+    if (this.currentUrl.length === 0) {
+      const home = this.config.homeUrl;
+      const validation = parseHttpUrl(home);
+      this.currentUrl = validation.ok && validation.url ? validation.url.href : home;
+    }
+  }
 
-    const home = this.config.homeUrl;
-    const validation = parseHttpUrl(home);
-    this.currentUrl = validation.ok && validation.url ? validation.url.href : home;
-    this.panel.webview.html = await this.buildHtml();
+  /** Forgets a webview that is gone. */
+  public detach(webview: vscode.Webview): void {
+    if (this.webview === webview) {
+      this.webview = undefined;
+    }
   }
 
   /**
-   * Rebuilds the webview when the allowlist or the policy changes, because the
-   * `frame-src` of the Content Security Policy is generated from them.
+   * Points the webview at the current URL again, used when the view is
+   * resolved again after being disposed.
    */
-  private async onConfigurationChanged(): Promise<void> {
-    this.panel.webview.html = await this.buildHtml();
+  public async refresh(): Promise<void> {
+    if (!this.webview || this.currentUrl.length === 0) {
+      return;
+    }
+    this.post({
+      type: 'navigate',
+      url: this.currentUrl,
+      canGoBack: this.history.canGoBack,
+      canGoForward: this.history.canGoForward,
+    });
   }
 
-  private async buildHtml(): Promise<string> {
-    const webview = this.panel.webview;
+  private async buildHtml(webview: vscode.Webview): Promise<string> {
     const config = this.config;
-    const nonce = createNonce();
+    const nonce = randomBytes(16).toString('hex');
     const frameSrc = buildFrameSrc(config.allowlist, config.securityPolicy);
 
     const csp = [
@@ -153,7 +123,10 @@ export class BrowserPanel {
   }
 
   private post(message: HostMessage): void {
-    void this.panel.webview.postMessage(message);
+    if (!this.webview) {
+      return;
+    }
+    void this.webview.postMessage(message);
   }
 
   private async handleMessage(raw: unknown): Promise<void> {
@@ -192,7 +165,6 @@ export class BrowserPanel {
         return;
       }
       case 'frameLoaded': {
-        this.post({ type: 'status', status: 'idle' });
         return;
       }
       case 'frameTimeout': {
@@ -213,24 +185,6 @@ export class BrowserPanel {
       loadTimeoutMs: FRAME_LOAD_TIMEOUT_MS,
     };
     this.post({ type: 'init', state });
-
-    const validation = parseHttpUrl(this.currentUrl);
-    if (!validation.ok || !validation.url) {
-      return;
-    }
-    const decision = isAllowedByPolicy(
-      validation.url,
-      this.config.allowlist,
-      this.config.securityPolicy,
-    );
-    if (!decision.allowed) {
-      this.post({
-        type: 'error',
-        message:
-          decision.reason ??
-          `"${this.currentUrl}" is blocked by the current security policy and allowlist.`,
-      });
-    }
   }
 
   private async navigateFromInput(input: string): Promise<void> {
@@ -245,7 +199,7 @@ export class BrowserPanel {
   /**
    * Loads a URL after the policy allowed it.
    */
-  private async navigateTo(target: string): Promise<void> {
+  public async navigateTo(target: string): Promise<void> {
     const validation = parseHttpUrl(target);
     if (!validation.ok || !validation.url) {
       this.post({ type: 'error', message: validation.reason ?? 'The URL is not valid.' });
@@ -265,7 +219,6 @@ export class BrowserPanel {
     }
 
     this.history.push(url.href);
-
     this.currentUrl = url.href;
     this.post({
       type: 'navigate',
@@ -273,7 +226,6 @@ export class BrowserPanel {
       canGoBack: this.history.canGoBack,
       canGoForward: this.history.canGoForward,
     });
-    this.post({ type: 'status', status: 'loading' });
     void this.inspectFrameability(url.href);
   }
 
@@ -289,7 +241,6 @@ export class BrowserPanel {
       canGoBack: this.history.canGoBack,
       canGoForward: this.history.canGoForward,
     });
-    this.post({ type: 'status', status: 'loading' });
     void this.inspectFrameability(url);
   }
 
@@ -305,7 +256,6 @@ export class BrowserPanel {
       canGoBack: this.history.canGoBack,
       canGoForward: this.history.canGoForward,
     });
-    this.post({ type: 'status', status: 'loading' });
     void this.inspectFrameability(url);
   }
 
@@ -313,14 +263,12 @@ export class BrowserPanel {
     if (this.currentUrl.length === 0) {
       return;
     }
-    // The reload keeps the current entry of the history, it does not add one.
     this.post({
       type: 'navigate',
       url: this.currentUrl,
       canGoBack: this.history.canGoBack,
       canGoForward: this.history.canGoForward,
     });
-    this.post({ type: 'status', status: 'loading' });
     void this.inspectFrameability(this.currentUrl);
   }
 
@@ -337,8 +285,8 @@ export class BrowserPanel {
    * Asks the server whether it probably refuses to be framed and reports the
    * answer as a hint.
    *
-   * The check runs in the extension host, which is not always the same machine
-   * as the renderer, so it can only ever be an indication.
+   * The check runs in the extension host, which is not always the machine
+   * that renders the frame, so it can only ever be an indication.
    */
   private async inspectFrameability(url: string): Promise<void> {
     const result: FrameabilityResult = await probeFrameability(url);
@@ -365,8 +313,4 @@ export class BrowserPanel {
       url,
     });
   }
-}
-
-function createNonce(): string {
-  return randomBytes(16).toString('hex');
 }

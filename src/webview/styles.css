@@ -184,3 +184,22 @@ body {
   border: none;
   background-color: var(--vscode-editor-background);
 }
+
+/* Narrow container: the view lives in the activity bar sidebar ------------ */
+
+@media (max-width: 480px) {
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  .address-bar {
+    order: -1;
+    flex: 1 0 100%;
+    margin-bottom: 4px;
+  }
+
+  .toolbar-button {
+    width: 26px;
+    height: 26px;
+  }
+}
