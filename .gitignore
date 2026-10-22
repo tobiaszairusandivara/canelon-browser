@@ -429,3 +429,6 @@ FodyWeavers.xsd
 
 # Canelon Browser build output
 dist/
+
+# Canelon Browser coverage report
+coverage/
