@@ -37,4 +37,10 @@ jobs:
         run: npm run build
 
       - name: Package the extension
-        run: npx vsce package --out /tmp/canelon-browser.vsix
+        run: npx vsce package --out canelon-browser.vsix
+
+      - name: Publish the packaged extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: canelon-browser-vsix
+          path: canelon-browser.vsix
