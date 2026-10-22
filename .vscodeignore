@@ -17,3 +17,6 @@ esbuild.mjs
 .editorconfig
 AGENTS.md
 opencode.json
+.prettierrc.json
+.prettierignore
+eslint.config.mjs

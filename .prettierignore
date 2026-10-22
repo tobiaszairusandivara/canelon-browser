@@ -1,0 +1,9 @@
+dist/
+node_modules/
+coverage/
+package-lock.json
+*.vsix
+.agents/
+.github/
+AGENTS.md
+docs/APP_CONTEXT.md

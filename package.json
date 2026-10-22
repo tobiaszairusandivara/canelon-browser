@@ -1,6 +1,6 @@
 {
   "name": "embedded-browser",
-  "displayName": "Canelón Browser",
+  "displayName": "Canel\u00f3n Browser",
   "description": "Opens a browser inside a VS Code webview panel with an allowlist, a configurable search engine and extension-side navigation history.",
   "version": "0.1.0",
   "publisher": "canelon",
@@ -35,12 +35,12 @@
       {
         "command": "canelonBrowser.open",
         "title": "Open",
-        "category": "Canelón Browser",
+        "category": "Canel\u00f3n Browser",
         "icon": "$(preview)"
       }
     ],
     "configuration": {
-      "title": "Canelón Browser",
+      "title": "Canel\u00f3n Browser",
       "properties": {
         "canelonBrowser.allowlist": {
           "type": "array",
@@ -81,21 +81,30 @@
     }
   },
   "scripts": {
+    "dev": "node esbuild.mjs --watch",
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.webview.json --noEmit",
-    "lint": "npm run typecheck",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
     "package": "npm run build && vsce package",
-    "verify": "npm run lint && npm run test && npm run build"
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^24.19.2",
     "@types/vscode": "1.90.0",
+    "@vitest/coverage-v8": "^5.0.5",
     "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.28.2",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.0",
     "vite": "^8.3.5",
     "vitest": "^5.0.5"
   }
