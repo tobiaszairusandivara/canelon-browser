@@ -1,5 +1,10 @@
 import { parseHttpUrl } from '../SecurityManager';
-import { type HostMessage, type WebviewMessage, parseHostMessage } from '../types';
+import {
+  type HostEnvelope,
+  type WebviewMessage,
+  parseHostEnvelope,
+  isEnvelopeForToken,
+} from '../types';
 
 interface VsCodeApi {
   postMessage(message: unknown): void;
@@ -10,6 +15,9 @@ interface VsCodeApi {
 declare function acquireVsCodeApi(): VsCodeApi;
 
 const vscode = acquireVsCodeApi();
+
+const TOKEN_META_NAME = 'canelon-browser-token';
+const STILL_LOADING_AFTER_MS = 4000;
 
 function requireElement<T extends HTMLElement>(id: string): T {
   const element = document.getElementById(id);
@@ -30,10 +38,26 @@ const noticeElement = requireElement<HTMLElement>('notice');
 const noticeAction = requireElement<HTMLButtonElement>('notice-action');
 const frameContainer = requireElement<HTMLElement>('frame-container');
 
+/**
+ * The token that proves that a message comes from the extension host.
+ *
+ * It is written into the HTML of this webview, so the framed page, which is
+ * cross-origin, cannot read it and cannot forge a message.
+ *
+ * The source of the event cannot be used for this: VS Code overwrites
+ * `window.parent` and `window.top` with the window of the webview itself and
+ * posts the messages of the extension host from the preload document, so the
+ * source of the event is a window that is not reachable from here.
+ */
+const token =
+  document.querySelector<HTMLMetaElement>(`meta[name="${TOKEN_META_NAME}"]`)?.content ?? '';
+
 let currentUrl = '';
 let loadTimeoutMs = 12000;
 let loadTimer: number | undefined;
+let stillLoadingTimer: number | undefined;
 let noticeUrl: string | undefined;
+let frameWindow: Window | undefined;
 
 function post(message: WebviewMessage): void {
   vscode.postMessage(message);
@@ -75,17 +99,41 @@ function showNotice(
   noticeUrl = actionUrl;
 }
 
-function loadFrame(url: string): void {
-  const validation = parseHttpUrl(url);
-  if (!validation.ok) {
-    showNotice('error', validation.reason ?? 'The URL is not valid.');
-    return;
-  }
-
+function clearTimers(): void {
   if (loadTimer !== undefined) {
     window.clearTimeout(loadTimer);
     loadTimer = undefined;
   }
+  if (stillLoadingTimer !== undefined) {
+    window.clearTimeout(stillLoadingTimer);
+    stillLoadingTimer = undefined;
+  }
+}
+
+/**
+ * The state shown when the page does not appear.
+ *
+ * The check is a heuristic: a cross-origin frame cannot be read, so the only
+ * signals are the timeout and the headers of the response.
+ */
+function showNotLoaded(url: string, detail: string): void {
+  setBusy(false);
+  showNotice(
+    'warning',
+    `This page may refuse to be embedded in the editor (X-Frame-Options or CSP frame-ancestors). ${detail} The check is heuristic, so the page may still be fine.`,
+    url,
+  );
+}
+
+function loadFrame(url: string): void {
+  const validation = parseHttpUrl(url);
+  if (!validation.ok) {
+    setBusy(false);
+    showNotice('error', validation.reason ?? 'The URL is not valid.');
+    return;
+  }
+
+  clearTimers();
 
   const frame = document.createElement('iframe');
   frame.className = 'browser-frame';
@@ -93,17 +141,25 @@ function loadFrame(url: string): void {
   frame.setAttribute('referrerpolicy', 'no-referrer');
 
   frame.addEventListener('load', () => {
-    if (loadTimer !== undefined) {
-      window.clearTimeout(loadTimer);
-      loadTimer = undefined;
-    }
+    clearTimers();
     setBusy(false);
     post({ type: 'frameLoaded', url });
   });
 
+  frame.addEventListener('error', () => {
+    clearTimers();
+    showNotLoaded(url, 'The frame reported an error while it was loading.');
+  });
+
   frame.src = url;
   frameContainer.replaceChildren(frame);
+  frameWindow = frame.contentWindow ?? undefined;
   setBusy(true);
+
+  stillLoadingTimer = window.setTimeout(() => {
+    stillLoadingTimer = undefined;
+    showNotice('info', `Still loading ${url}…`, url);
+  }, STILL_LOADING_AFTER_MS);
 
   loadTimer = window.setTimeout(() => {
     loadTimer = undefined;
@@ -111,18 +167,36 @@ function loadFrame(url: string): void {
   }, loadTimeoutMs);
 }
 
-function handleHostMessage(message: HostMessage): void {
+function handleHostMessage(envelope: HostEnvelope): void {
+  const message = envelope.message;
   switch (message.type) {
     case 'init': {
       loadTimeoutMs = message.state.loadTimeoutMs;
       updateButtons(message.state.canGoBack, message.state.canGoForward);
       setAddress(message.state.url);
+      if (!message.state.allowed) {
+        setBusy(false);
+        showNotice(
+          'error',
+          message.state.blockedReason ??
+            `The security policy does not allow "${message.state.url}".`,
+        );
+        return;
+      }
       loadFrame(message.state.url);
       return;
     }
     case 'navigate': {
       updateButtons(message.canGoBack, message.canGoForward);
       setAddress(message.url);
+      if (!message.allowed) {
+        setBusy(false);
+        showNotice(
+          'error',
+          message.blockedReason ?? `The security policy does not allow "${message.url}".`,
+        );
+        return;
+      }
       clearNotice();
       loadFrame(message.url);
       return;
@@ -191,18 +265,18 @@ addressInput.addEventListener('focus', () => {
 });
 
 window.addEventListener('message', (event: MessageEvent<unknown>) => {
-  // Only the extension host may drive the panel. The framed page shares the
-  // window hierarchy, so the source has to be checked explicitly.
-  if (event.source !== window.parent && event.source !== window) {
+  // The framed page shares the window hierarchy and can post into this
+  // window, so the origin of a message is not enough: the token is.
+  if (event.source === frameWindow) {
     return;
   }
 
-  const message = parseHostMessage(event.data);
-  if (!message) {
+  const envelope = parseHostEnvelope(event.data);
+  if (!envelope || !isEnvelopeForToken(envelope, token)) {
     return;
   }
 
-  handleHostMessage(message);
+  handleHostMessage(envelope);
 });
 
 post({ type: 'ready' });

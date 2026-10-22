@@ -23,6 +23,7 @@ import { buildFrameSrc, isAllowedByPolicy, parseHttpUrl, resolveTarget } from '.
 export class BrowserSession {
   private readonly history = new NavigationHistory();
   private currentUrl = '';
+  private token = '';
   private webview: vscode.Webview | undefined;
 
   constructor(
@@ -52,6 +53,7 @@ export class BrowserSession {
    */
   public async attach(webview: vscode.Webview): Promise<void> {
     this.webview = webview;
+    this.token = randomBytes(16).toString('hex');
     webview.html = await this.buildHtml(webview);
 
     webview.onDidReceiveMessage((raw: unknown) => {
@@ -80,11 +82,14 @@ export class BrowserSession {
     if (!this.webview || this.currentUrl.length === 0) {
       return;
     }
+    const decision = this.decisionFor(this.currentUrl);
     this.post({
       type: 'navigate',
       url: this.currentUrl,
       canGoBack: this.history.canGoBack,
       canGoForward: this.history.canGoForward,
+      allowed: decision.allowed,
+      ...(decision.reason !== undefined ? { blockedReason: decision.reason } : {}),
     });
   }
 
@@ -118,6 +123,7 @@ export class BrowserSession {
       .decode(template)
       .replaceAll('__CSP__', csp)
       .replaceAll('__NONCE__', nonce)
+      .replaceAll('__TOKEN__', this.token)
       .replaceAll('__STYLE_URI__', stylesUri)
       .replaceAll('__SCRIPT_URI__', scriptUri);
   }
@@ -126,7 +132,22 @@ export class BrowserSession {
     if (!this.webview) {
       return;
     }
-    void this.webview.postMessage(message);
+    void this.webview.postMessage({ token: this.token, message });
+  }
+
+  private decisionFor(url: string): { allowed: boolean; reason?: string } {
+    const validation = parseHttpUrl(url);
+    if (!validation.ok || !validation.url) {
+      return { allowed: false, reason: validation.reason ?? 'The URL is not valid.' };
+    }
+    const decision = isAllowedByPolicy(
+      validation.url,
+      this.config.allowlist,
+      this.config.securityPolicy,
+    );
+    return decision.allowed
+      ? { allowed: true }
+      : { allowed: false, reason: decision.reason ?? 'The URL is blocked by the policy.' };
   }
 
   private async handleMessage(raw: unknown): Promise<void> {
@@ -177,12 +198,15 @@ export class BrowserSession {
   }
 
   private postInit(): void {
+    const decision = this.decisionFor(this.currentUrl);
     const state: PanelInitState = {
       url: this.currentUrl,
       canGoBack: this.history.canGoBack,
       canGoForward: this.history.canGoForward,
       securityPolicy: this.config.securityPolicy,
       loadTimeoutMs: FRAME_LOAD_TIMEOUT_MS,
+      allowed: decision.allowed,
+      ...(decision.reason !== undefined ? { blockedReason: decision.reason } : {}),
     };
     this.post({ type: 'init', state });
   }
@@ -225,6 +249,7 @@ export class BrowserSession {
       url: url.href,
       canGoBack: this.history.canGoBack,
       canGoForward: this.history.canGoForward,
+      allowed: true,
     });
     void this.inspectFrameability(url.href);
   }
@@ -240,6 +265,7 @@ export class BrowserSession {
       url,
       canGoBack: this.history.canGoBack,
       canGoForward: this.history.canGoForward,
+      allowed: true,
     });
     void this.inspectFrameability(url);
   }
@@ -255,6 +281,7 @@ export class BrowserSession {
       url,
       canGoBack: this.history.canGoBack,
       canGoForward: this.history.canGoForward,
+      allowed: true,
     });
     void this.inspectFrameability(url);
   }
@@ -268,6 +295,7 @@ export class BrowserSession {
       url: this.currentUrl,
       canGoBack: this.history.canGoBack,
       canGoForward: this.history.canGoForward,
+      allowed: true,
     });
     void this.inspectFrameability(this.currentUrl);
   }

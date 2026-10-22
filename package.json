@@ -1,6 +1,6 @@
 {
   "name": "embedded-browser",
-  "displayName": "Canel\u00f3n Browser",
+  "displayName": "Canelón Browser",
   "description": "Opens a browser inside a VS Code webview panel with an allowlist, a configurable search engine and extension-side navigation history.",
   "version": "0.1.0",
   "publisher": "canelon",
@@ -35,7 +35,7 @@
       {
         "command": "canelonBrowser.open",
         "title": "Open",
-        "category": "Canel\u00f3n Browser",
+        "category": "Canelón Browser",
         "icon": "$(preview)"
       }
     ],
@@ -43,7 +43,7 @@
       "activitybar": [
         {
           "id": "canelonBrowser",
-          "title": "Canel\u00f3n Browser",
+          "title": "Canelón Browser",
           "icon": "images/icon.svg"
         }
       ]
@@ -54,12 +54,12 @@
           "id": "canelonBrowser.browser",
           "name": "Browser",
           "type": "webview",
-          "contextualTitle": "Canel\u00f3n Browser"
+          "contextualTitle": "Canelón Browser"
         }
       ]
     },
     "configuration": {
-      "title": "Canel\u00f3n Browser",
+      "title": "Canelón Browser",
       "properties": {
         "canelonBrowser.allowlist": {
           "type": "array",
@@ -114,6 +114,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^24.19.2",
     "@types/vscode": "1.90.0",
     "@vitest/coverage-v8": "^5.0.5",
@@ -121,6 +122,7 @@
     "esbuild": "^0.28.2",
     "eslint": "^10.13.0",
     "globals": "^17.13.0",
+    "jsdom": "^30.1.3",
     "prettier": "^3.9.10",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.0",
