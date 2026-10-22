@@ -1,0 +1,102 @@
+{
+  "name": "embedded-browser",
+  "displayName": "Canelón Browser",
+  "description": "Opens a browser inside a VS Code webview panel with an allowlist, a configurable search engine and extension-side navigation history.",
+  "version": "0.1.0",
+  "publisher": "canelon",
+  "license": "MIT",
+  "author": "Canelon",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tobiaszairusandivara/canelon-browser.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tobiaszairusandivara/canelon-browser/issues"
+  },
+  "homepage": "https://github.com/tobiaszairusandivara/canelon-browser#readme",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "browser",
+    "webview",
+    "iframe",
+    "allowlist"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onCommand:canelonBrowser.open"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "canelonBrowser.open",
+        "title": "Open",
+        "category": "Canelón Browser",
+        "icon": "$(preview)"
+      }
+    ],
+    "configuration": {
+      "title": "Canelón Browser",
+      "properties": {
+        "canelonBrowser.allowlist": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Patterns of URLs the browser is allowed to load. Only `http:` and `https:` are supported. Patterns may use `*` as a host wildcard (`*.internal.company.com`), an exact port (`localhost:3000`), a port wildcard (`localhost:*`) and a path prefix (`https://docs.python.org/*`). A pattern without a scheme matches both `http` and `https`. Only used when `#canelonBrowser.securityPolicy#` is `strict`.",
+          "scope": "window"
+        },
+        "canelonBrowser.securityPolicy": {
+          "type": "string",
+          "enum": [
+            "strict",
+            "open"
+          ],
+          "default": "open",
+          "enumDescriptions": [
+            "Block every URL that is not covered by `canelonBrowser.allowlist`.",
+            "Allow every `http:` and `https:` URL."
+          ],
+          "markdownDescription": "Controls which pages the embedded browser is allowed to load.",
+          "scope": "window"
+        },
+        "canelonBrowser.searchEngine": {
+          "type": "string",
+          "default": "https://www.bing.com/search?q=%s",
+          "markdownDescription": "URL template used when the text typed in the address bar is not a URL. `%s` is replaced by the URL-encoded query. Note that many search engines send `X-Frame-Options: SAMEORIGIN` and therefore cannot be displayed inside the webview.",
+          "scope": "window"
+        },
+        "canelonBrowser.homeUrl": {
+          "type": "string",
+          "default": "https://www.wikipedia.org",
+          "markdownDescription": "Page loaded when the panel opens and when the Home button is pressed.",
+          "scope": "window"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.webview.json --noEmit",
+    "lint": "npm run typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "package": "npm run build && vsce package",
+    "verify": "npm run lint && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/vscode": "1.90.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}
