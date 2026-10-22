@@ -6,6 +6,16 @@
   box-sizing: border-box;
 }
 
+/*
+ * The `hidden` attribute is implemented by the user agent with
+ * `[hidden] { display: none }`, and any author rule that sets `display` beats
+ * it, whatever its specificity. Without this rule the loading indicator and
+ * the notices stay visible forever.
+ */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   height: 100%;
