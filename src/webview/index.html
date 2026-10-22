@@ -14,7 +14,7 @@
         id="back"
         class="toolbar-button"
         type="button"
-        title="Back"
+        title="Back (Alt+Left)"
         aria-label="Back"
         disabled
       >
@@ -24,14 +24,30 @@
         id="forward"
         class="toolbar-button"
         type="button"
-        title="Forward"
+        title="Forward (Alt+Right)"
         aria-label="Forward"
         disabled
       >
         <span class="codicon codicon-arrow-right" aria-hidden="true"></span>
       </button>
-      <button id="reload" class="toolbar-button" type="button" title="Reload" aria-label="Reload">
+      <button
+        id="reload"
+        class="toolbar-button"
+        type="button"
+        title="Reload (Ctrl+R)"
+        aria-label="Reload"
+      >
         <span class="codicon codicon-refresh" aria-hidden="true"></span>
+      </button>
+      <button
+        id="stop"
+        class="toolbar-button"
+        type="button"
+        title="Stop loading"
+        aria-label="Stop loading"
+        hidden
+      >
+        <span class="codicon codicon-debug-stop" aria-hidden="true"></span>
       </button>
       <button id="home" class="toolbar-button" type="button" title="Home" aria-label="Home">
         <span class="codicon codicon-home" aria-hidden="true"></span>
@@ -51,6 +67,34 @@
       </div>
 
       <button
+        id="zoom-out"
+        class="toolbar-button"
+        type="button"
+        title="Zoom out"
+        aria-label="Zoom out"
+      >
+        <span class="codicon codicon-zoom-out" aria-hidden="true"></span>
+      </button>
+      <button
+        id="zoom-reset"
+        class="toolbar-button zoom-level"
+        type="button"
+        title="Reset the zoom"
+        aria-label="Reset the zoom"
+      >
+        100%
+      </button>
+      <button
+        id="zoom-in"
+        class="toolbar-button"
+        type="button"
+        title="Zoom in"
+        aria-label="Zoom in"
+      >
+        <span class="codicon codicon-zoom-in" aria-hidden="true"></span>
+      </button>
+
+      <button
         id="open-external"
         class="toolbar-button"
         type="button"
@@ -65,6 +109,10 @@
       <span id="loading" class="loading-indicator" hidden>
         <span class="codicon codicon-loading codicon-modifier-spin" aria-hidden="true"></span>
         <span>Loading…</span>
+      </span>
+      <span id="focus-lock" class="focus-lock" hidden>
+        <span class="codicon codicon-keyboard" aria-hidden="true"></span>
+        <span>The keyboard is in the page</span>
       </span>
       <span id="notice" class="notice" hidden></span>
       <button id="notice-action" class="notice-action" type="button" hidden>

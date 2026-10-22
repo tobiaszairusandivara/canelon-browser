@@ -134,6 +134,21 @@ body {
   color: var(--vscode-descriptionForeground);
 }
 
+.focus-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--vscode-notifications-infoIcon-foreground, var(--vscode-descriptionForeground));
+}
+
+.zoom-level {
+  width: auto;
+  min-width: 44px;
+  padding: 0 6px;
+  font-size: 11px;
+  line-height: 26px;
+}
+
 .notice {
   flex: 1 1 auto;
   min-width: 0;
@@ -171,16 +186,24 @@ body {
 /* Frame ------------------------------------------------------------------ */
 
 .frame-container {
+  --canelon-zoom: 1;
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
+  overflow: auto;
   background-color: var(--vscode-editor-background);
 }
 
 .browser-frame {
   display: block;
-  width: 100%;
-  height: 100%;
+  /*
+   * The zoom of a cross-origin frame cannot be changed, so the frame is
+   * scaled and its box is enlarged in the same proportion.
+   */
+  width: calc(100% / var(--canelon-zoom));
+  height: calc(100% / var(--canelon-zoom));
+  transform: scale(var(--canelon-zoom));
+  transform-origin: top left;
   border: none;
   background-color: var(--vscode-editor-background);
 }
