@@ -20,6 +20,9 @@ export class BrowserViewProvider implements vscode.WebviewViewProvider, vscode.D
   public async resolveWebviewView(view: vscode.WebviewView): Promise<void> {
     view.webview.options = {
       enableScripts: true,
+      // Without this the sandbox of the frame of the webview does not allow
+      // the forms, so no page could ever send a login.
+      enableForms: true,
       localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist', 'webview')],
     };
 

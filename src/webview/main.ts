@@ -18,6 +18,20 @@ const vscode = acquireVsCodeApi();
 
 const TOKEN_META_NAME = 'canelon-browser-token';
 const STILL_LOADING_AFTER_MS = 4000;
+const FOCUS_POLL_MS = 250;
+const ZOOM_MIN = 0.5;
+const ZOOM_MAX = 2;
+const ZOOM_STEP = 0.25;
+
+/**
+ * The sandbox of the frame of the page.
+ *
+ * It repeats what the webview of VS Code already allows, so the page keeps
+ * its own origin (its cookies) and can send its forms. The modals and the
+ * popups are not allowed, the sandbox of the frame of VS Code does not allow
+ * them either.
+ */
+const FRAME_SANDBOX = 'allow-scripts allow-forms allow-same-origin allow-downloads';
 
 function requireElement<T extends HTMLElement>(id: string): T {
   const element = document.getElementById(id);
@@ -30,10 +44,15 @@ function requireElement<T extends HTMLElement>(id: string): T {
 const backButton = requireElement<HTMLButtonElement>('back');
 const forwardButton = requireElement<HTMLButtonElement>('forward');
 const reloadButton = requireElement<HTMLButtonElement>('reload');
+const stopButton = requireElement<HTMLButtonElement>('stop');
 const homeButton = requireElement<HTMLButtonElement>('home');
+const zoomInButton = requireElement<HTMLButtonElement>('zoom-in');
+const zoomOutButton = requireElement<HTMLButtonElement>('zoom-out');
+const zoomResetButton = requireElement<HTMLButtonElement>('zoom-reset');
 const openExternalButton = requireElement<HTMLButtonElement>('open-external');
 const addressInput = requireElement<HTMLInputElement>('address');
 const loadingIndicator = requireElement<HTMLElement>('loading');
+const focusLockIndicator = requireElement<HTMLElement>('focus-lock');
 const noticeElement = requireElement<HTMLElement>('notice');
 const noticeAction = requireElement<HTMLButtonElement>('notice-action');
 const frameContainer = requireElement<HTMLElement>('frame-container');
@@ -58,13 +77,33 @@ let loadTimer: number | undefined;
 let stillLoadingTimer: number | undefined;
 let noticeUrl: string | undefined;
 let frameWindow: Window | undefined;
+let frameElement: HTMLIFrameElement | undefined;
+let frameHasFocus = false;
+let zoom = readZoom();
 
 function post(message: WebviewMessage): void {
   vscode.postMessage(message);
 }
 
+function readZoom(): number {
+  const state = vscode.getState() as { zoom?: unknown } | undefined;
+  const value = state?.zoom;
+  return typeof value === 'number' && value >= ZOOM_MIN && value <= ZOOM_MAX ? value : 1;
+}
+
+function writeZoom(value: number): void {
+  zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(value * 100) / 100));
+  vscode.setState({ zoom });
+  frameContainer.style.setProperty('--canelon-zoom', String(zoom));
+  zoomResetButton.textContent = `${Math.round(zoom * 100)}%`;
+  zoomOutButton.disabled = zoom <= ZOOM_MIN;
+  zoomInButton.disabled = zoom >= ZOOM_MAX;
+}
+
 function setBusy(busy: boolean): void {
   loadingIndicator.hidden = !busy;
+  reloadButton.hidden = busy;
+  stopButton.hidden = !busy;
 }
 
 function setAddress(url: string): void {
@@ -125,6 +164,15 @@ function showNotLoaded(url: string, detail: string): void {
   );
 }
 
+function setFrameFocused(focused: boolean): void {
+  if (focused === frameHasFocus) {
+    return;
+  }
+  frameHasFocus = focused;
+  focusLockIndicator.hidden = !focused;
+  post(focused ? { type: 'frameFocus' } : { type: 'frameBlur' });
+}
+
 function loadFrame(url: string): void {
   const validation = parseHttpUrl(url);
   if (!validation.ok) {
@@ -138,6 +186,7 @@ function loadFrame(url: string): void {
   const frame = document.createElement('iframe');
   frame.className = 'browser-frame';
   frame.title = 'Embedded page';
+  frame.setAttribute('sandbox', FRAME_SANDBOX);
   frame.setAttribute('referrerpolicy', 'no-referrer');
 
   frame.addEventListener('load', () => {
@@ -151,10 +200,19 @@ function loadFrame(url: string): void {
     showNotLoaded(url, 'The frame reported an error while it was loading.');
   });
 
+  frame.addEventListener('focus', () => {
+    setFrameFocused(true);
+  });
+  frame.addEventListener('blur', () => {
+    setFrameFocused(false);
+  });
+
   frame.src = url;
   frameContainer.replaceChildren(frame);
+  frameElement = frame;
   frameWindow = frame.contentWindow ?? undefined;
   setBusy(true);
+  writeZoom(zoom);
 
   stillLoadingTimer = window.setTimeout(() => {
     stillLoadingTimer = undefined;
@@ -165,6 +223,24 @@ function loadFrame(url: string): void {
     loadTimer = undefined;
     post({ type: 'frameTimeout', url });
   }, loadTimeoutMs);
+}
+
+/**
+ * Stops the load of the page.
+ *
+ * A cross-origin frame cannot be stopped with `contentWindow.stop()`, so the
+ * frame is removed from the document, which aborts the navigation.
+ */
+function stopLoading(): void {
+  if (!frameElement) {
+    return;
+  }
+  clearTimers();
+  frameElement.remove();
+  frameElement = undefined;
+  frameWindow = undefined;
+  setBusy(false);
+  showNotice('info', 'The load was stopped.', currentUrl);
 }
 
 function handleHostMessage(envelope: HostEnvelope): void {
@@ -205,6 +281,11 @@ function handleHostMessage(envelope: HostEnvelope): void {
       setBusy(message.status === 'loading');
       return;
     }
+    case 'focusAddressBar': {
+      addressInput.focus();
+      addressInput.select();
+      return;
+    }
     case 'notice': {
       setBusy(false);
       showNotice(message.level, message.message, message.url);
@@ -232,8 +313,24 @@ reloadButton.addEventListener('click', () => {
   post({ type: 'reload' });
 });
 
+stopButton.addEventListener('click', () => {
+  stopLoading();
+});
+
 homeButton.addEventListener('click', () => {
   post({ type: 'home' });
+});
+
+zoomInButton.addEventListener('click', () => {
+  writeZoom(zoom + ZOOM_STEP);
+});
+
+zoomOutButton.addEventListener('click', () => {
+  writeZoom(zoom - ZOOM_STEP);
+});
+
+zoomResetButton.addEventListener('click', () => {
+  writeZoom(1);
 });
 
 openExternalButton.addEventListener('click', () => {
@@ -262,6 +359,7 @@ addressInput.addEventListener('keydown', (event: KeyboardEvent) => {
 
 addressInput.addEventListener('focus', () => {
   addressInput.select();
+  setFrameFocused(false);
 });
 
 window.addEventListener('message', (event: MessageEvent<unknown>) => {
@@ -279,4 +377,12 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
   handleHostMessage(envelope);
 });
 
+// The focus of the frame is polled because the focus event of an iframe does
+// not bubble and it is not fired in every browser.
+window.setInterval(() => {
+  const focused = document.activeElement === frameElement;
+  setFrameFocused(focused);
+}, FOCUS_POLL_MS);
+
+writeZoom(zoom);
 post({ type: 'ready' });

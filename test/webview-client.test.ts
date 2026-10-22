@@ -173,6 +173,80 @@ describe('the webview client', () => {
     expect(harness.posted.map((message) => message.type)).toContain('frameLoaded');
   });
 
+  it('sandboxes the frame so the page can send its forms', async () => {
+    const harness = await createHarness();
+    deliver(harness, initEnvelope('https://example.com/'));
+
+    const frame = harness.window.document.querySelector('iframe');
+    expect(frame?.getAttribute('sandbox')).toBe(
+      'allow-scripts allow-forms allow-same-origin allow-downloads',
+    );
+  });
+
+  it('stops the load by removing the frame', async () => {
+    const harness = await createHarness();
+    deliver(harness, initEnvelope('https://example.com/'));
+    expect(harness.window.document.querySelector('iframe')).not.toBeNull();
+
+    harness.window.document
+      .getElementById('stop')
+      ?.dispatchEvent(new harness.window.Event('click'));
+
+    expect(harness.window.document.querySelector('iframe')).toBeNull();
+    const notice = harness.window.document.getElementById('notice');
+    expect(notice?.hidden).toBe(false);
+    expect(notice?.textContent).toContain('stopped');
+  });
+
+  it('shows the stop button while it loads and the reload button when it is idle', async () => {
+    const harness = await createHarness();
+    deliver(harness, initEnvelope('https://example.com/'));
+
+    const stop = harness.window.document.getElementById('stop');
+    const reload = harness.window.document.getElementById('reload');
+    expect(stop?.hidden).toBe(false);
+    expect(reload?.hidden).toBe(true);
+
+    harness.window.document
+      .querySelector('iframe')
+      ?.dispatchEvent(new harness.window.Event('load'));
+
+    expect(stop?.hidden).toBe(true);
+    expect(reload?.hidden).toBe(false);
+  });
+
+  it('zooms the frame in and out', async () => {
+    const harness = await createHarness();
+    deliver(harness, initEnvelope('https://example.com/'));
+
+    const container = harness.window.document.getElementById('frame-container');
+    const zoomIn = harness.window.document.getElementById('zoom-in');
+    const zoomReset = harness.window.document.getElementById('zoom-reset');
+
+    zoomIn?.dispatchEvent(new harness.window.Event('click'));
+    expect(container?.style.getPropertyValue('--canelon-zoom')).toBe('1.25');
+    expect(harness.window.document.getElementById('zoom-reset')?.textContent).toBe('125%');
+
+    zoomReset?.dispatchEvent(new harness.window.Event('click'));
+    expect(container?.style.getPropertyValue('--canelon-zoom')).toBe('1');
+    expect(zoomReset?.textContent).toBe('100%');
+  });
+
+  it('tells the host when the page takes the focus', async () => {
+    const harness = await createHarness();
+    deliver(harness, initEnvelope('https://example.com/'));
+
+    const frame = harness.window.document.querySelector('iframe') as HTMLIFrameElement;
+    frame.focus();
+
+    // The focus of the frame is polled, so the message comes with the tick.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(harness.posted.map((message) => message.type)).toContain('frameFocus');
+    const lock = harness.window.document.getElementById('focus-lock');
+    expect(lock?.hidden).toBe(false);
+  });
+
   it('shows the blocked state when the policy does not allow the page', async () => {
     const harness = await createHarness();
     deliver(harness, {
