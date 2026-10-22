@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="__CSP__" />
+    <link rel="stylesheet" href="__STYLE_URI__" />
+    <title>Canelón Browser</title>
+  </head>
+  <body>
+    <div class="toolbar" role="toolbar" aria-label="Browser navigation">
+      <button
+        id="back"
+        class="toolbar-button"
+        type="button"
+        title="Back"
+        aria-label="Back"
+        disabled
+      >
+        <span class="codicon codicon-arrow-left" aria-hidden="true"></span>
+      </button>
+      <button
+        id="forward"
+        class="toolbar-button"
+        type="button"
+        title="Forward"
+        aria-label="Forward"
+        disabled
+      >
+        <span class="codicon codicon-arrow-right" aria-hidden="true"></span>
+      </button>
+      <button
+        id="reload"
+        class="toolbar-button"
+        type="button"
+        title="Reload"
+        aria-label="Reload"
+      >
+        <span class="codicon codicon-refresh" aria-hidden="true"></span>
+      </button>
+      <button
+        id="home"
+        class="toolbar-button"
+        type="button"
+        title="Home"
+        aria-label="Home"
+      >
+        <span class="codicon codicon-home" aria-hidden="true"></span>
+      </button>
+
+      <div class="address-bar">
+        <span class="codicon codicon-lock address-icon" aria-hidden="true"></span>
+        <input
+          id="address"
+          class="address-input"
+          type="text"
+          spellcheck="false"
+          autocomplete="off"
+          aria-label="Address and search bar"
+          placeholder="Enter a URL or a search term"
+        />
+      </div>
+
+      <button
+        id="open-external"
+        class="toolbar-button"
+        type="button"
+        title="Open in External Browser"
+        aria-label="Open in External Browser"
+      >
+        <span class="codicon codicon-link-external" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <div class="status-bar" aria-live="polite">
+      <span id="loading" class="loading-indicator" hidden>
+        <span class="codicon codicon-loading codicon-modifier-spin" aria-hidden="true"></span>
+        <span>Loading…</span>
+      </span>
+      <span id="notice" class="notice" hidden></span>
+      <button id="notice-action" class="notice-action" type="button" hidden>
+        Open in External Browser
+      </button>
+    </div>
+
+    <div id="frame-container" class="frame-container"></div>
+
+    <script nonce="__NONCE__" src="__SCRIPT_URI__"></script>
+  </body>
+</html>
