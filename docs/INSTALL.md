@@ -84,6 +84,26 @@ the name), which is the one the uninstall command needs.
 `package.json`; all three are present. To package without the repository
 metadata (for example in a fork) add `--allow-missing-repository`.
 
+## Reinstall from scratch
+
+When a previous version of the extension is installed, the files of the
+extension can be left in the folder of the server and the old version can
+keep running. To install a new version cleanly:
+
+```bash
+# desktop VS Code
+code --uninstall-extension canelon.embedded-browser
+code --install-extension ./embedded-browser-0.1.0.vsix --force
+
+# code-server without the CLI
+rm -rf ~/.vscode-server/extensions/canelon.embedded-browser-*
+# then install it again, and restart the server
+```
+
+The version that is running can be seen in the detail of the extension, in the
+Extensions panel, or with **Developer: Show Running Extensions** in the
+Command Palette.
+
 ## Uninstall
 
 ```bash

@@ -19,6 +19,10 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ### Features
 
 - Open a browser in a VS Code webview with a toolbar, an editable address bar and Codicon buttons
+- Allow the forms of the framed pages, so a login can be sent
+- Add a stop button, a zoom between 50% and 200% and the shortcuts of the browser
+- Open the developer tools of the webview with F12
+- Tell when the keyboard is inside the page, with an indicator of the focus lock
 - Contribute a container to the activity bar, so the extension appears in the bar like most of them. The command of the extension focuses that view, so the icon and the command do the same thing
 - Route the text of the address bar to a configurable search engine when it is not a URL
 - Enforce an allowlist with a `strict`/`open` security policy and generate the `frame-src` of the webview CSP from it

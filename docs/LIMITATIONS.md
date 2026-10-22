@@ -92,6 +92,47 @@ therefore report a different answer than the frame gets.
 If a service of the container has to be embedded, expose it through a host
 name or a port that the user can reach, and add that host to the allowlist.
 
+## Modals, popups and the sandbox
+
+The webview of VS Code renders its content in a frame whose sandbox has
+`allow-scripts`, `allow-same-origin`, `allow-forms`, `allow-pointer-lock` and
+`allow-downloads`, and nothing else. The extension cannot add permissions to
+it, so:
+
+- `alert()`, `confirm()` and `prompt()` are ignored: the page shows nothing
+  and the console of the browser says that the call was ignored because the
+  document is sandboxed.
+- `window.open()` does nothing, so the links that open a new tab do not work.
+- The pages that need a modal to continue do not work.
+
+The forms **are** allowed (`canelonBrowser.enableForms`), so a login can be
+sent, and the downloads work.
+
+The cookies are the other half of the story: the framed page is a third party
+inside the webview, and the browsers that block the third party cookies make
+the session die right after the login. When a site logs in and then forgets
+the session immediately, that is the reason, and the page has to be opened in
+the external browser.
+
+## The shortcuts of VS Code
+
+While the page has the focus, the keyboard is inside the page, but VS Code
+also re-dispatches every key to its own keybinding service. Its shortcuts
+(`Ctrl+P`, `Ctrl+Shift+P`, `F12`…) are executed while the user is typing in a
+page, and they cannot be disabled by an extension.
+
+The indicator of the focus lock says when the keyboard is inside the page, and
+the shortcuts of the browser (`Ctrl+L`, `Ctrl+R`, `Alt+Left`, `Alt+Right`) are
+only bound in the desktop application: in code-server the browser is the one
+that answers `Ctrl+R` and it would reload the whole workbench.
+
+## The zoom
+
+The zoom of a cross-origin frame cannot be changed, so the frame is scaled
+with a transformation and its box is enlarged in the same proportion. The
+page is rendered at the size of the frame and then scaled, so the text can
+look less crisp than the zoom of the browser.
+
 ## Other limitations
 
 - The browser lives in a view of the activity bar, so it is as wide as the

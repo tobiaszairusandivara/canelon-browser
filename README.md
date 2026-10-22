@@ -15,6 +15,38 @@ page in an `iframe` inside a webview view and drives it with a small toolbar.
   engine.
 - **Navigation history.** The extension keeps the history on its side, because
   a cross-origin frame cannot be inspected from the extension host.
+- **The pages work.** The forms are allowed, so a login can be sent, and the
+  downloads of the page work.
+
+## The toolbar
+
+| Button                 | What it does                                      |
+| :--------------------- | :------------------------------------------------ |
+| Back / Forward         | Walk the history of the extension.                |
+| Reload / Stop          | Reload, or stop the load while it is in progress. |
+| Home                   | Load the configured home page.                    |
+| Address bar            | A URL, or a search when the text is not a URL.    |
+| Zoom out / % / Zoom in | Zoom the page between 50% and 200%.               |
+| Open in External       | Open the page in the browser of the system.       |
+
+### Keyboard
+
+| Shortcut                 | What it does                             |
+| :----------------------- | :--------------------------------------- |
+| `Ctrl+L`                 | Put the caret in the address bar.        |
+| `Ctrl+R`                 | Reload the page.                         |
+| `Alt+Left` / `Alt+Right` | Back and forward.                        |
+| `F12`                    | Open the developer tools of the webview. |
+
+The shortcuts of the browser are only bound in the desktop application: in
+code-server the browser answers `Ctrl+R` and it would reload the whole
+workbench. `F12` opens the developer tools of the window in the desktop
+application; in code-server the developer tools of the browser show the
+workbench, where the webview is an iframe.
+
+While the page has the focus, the indicator of the focus lock says that the
+keyboard is inside the page. VS Code still runs its own shortcuts in that
+moment, which is a limitation of the webview of VS Code.
 
 ## Where the browser lives
 

@@ -20,7 +20,25 @@ fails is a bug to report.
       Codicon glyphs are rendered, not empty squares.
 - [ ] The view can be dragged into the editor area and keeps working.
 
-## 1. Search routing
+## 1. The pages work
+
+- [ ] A page loads inside the frame and the indicator of loading disappears.
+- [ ] Clicking a link inside the page navigates it (the address bar does not
+      follow, that is the documented limitation).
+- [ ] Typing in a field of the page works: the characters reach the page.
+- [ ] A form of the page can be sent: log in in any site and check that the
+      session survives. If the site forgets the session right after the login,
+      it is the third party cookies, not the form.
+- [ ] The **Stop** button appears while the page loads and stops the load.
+- [ ] The zoom buttons change the size of the page and the percentage is shown.
+- [ ] The indicator of the focus lock appears when the page has the focus, and
+      disappears when the caret goes back to the address bar.
+- [ ] `Ctrl+L` puts the caret in the address bar, `Ctrl+R` reloads and
+      `Alt+Left` / `Alt+Right` walk the history (desktop only).
+- [ ] `F12` opens the developer tools of the window with the webview inside.
+      In code-server it shows a message that says to use the F12 of the browser.
+
+## 2. Search routing
 
 - [ ] Typing `how to test` in the address bar and pressing Enter loads a
       search engine page with the query encoded (`?q=how%20to%20test`).
@@ -31,7 +49,7 @@ fails is a bug to report.
 - [ ] Changing `canelonBrowser.searchEngine` to another `%s` template and
       searching again uses the new engine.
 
-## 2. Navigation history
+## 3. Navigation history
 
 - [ ] Load `https://example.com`, then `https://example.org`, then `https://example.net`.
 - [ ] **Back** goes to `example.org` and the address bar follows.
@@ -43,7 +61,7 @@ fails is a bug to report.
 - [ ] **Home** loads `canelonBrowser.homeUrl`.
 - [ ] After a Back, loading a new page drops the forward entries.
 
-## 3. Allowlist
+## 4. Allowlist
 
 Set `canelonBrowser.securityPolicy` to `strict` and
 `canelonBrowser.allowlist` to:
@@ -72,7 +90,7 @@ Set `canelonBrowser.securityPolicy` to `strict` and
       only lists the allowlisted hosts. A URL outside the allowlist is
       refused by the browser itself, not only by the extension code.
 
-## 4. Pages that refuse to be embedded
+## 5. Pages that refuse to be embedded
 
 - [ ] Load `https://duckduckgo.com` (it sends `X-Frame-Options: SAMEORIGIN`):
       the panel shows the notice that the page may refuse to be embedded and
@@ -81,7 +99,7 @@ Set `canelonBrowser.securityPolicy` to `strict` and
       browser.
 - [ ] A page that loads normally shows no warning notice.
 
-## 5. Desktop VS Code
+## 6. Desktop VS Code
 
 - [ ] The view survives switching tabs and coming back (the page is not
       reloaded from scratch).
@@ -89,7 +107,7 @@ Set `canelonBrowser.securityPolicy` to `strict` and
       panel again.
 - [ ] The panel is not affected by the light and the dark theme.
 
-## 6. code-server (remote web)
+## 7. code-server (remote web)
 
 - [ ] The icon of the activity bar opens the browser in the browser of the
       user.
@@ -100,7 +118,7 @@ Set `canelonBrowser.securityPolicy` to `strict` and
 - [ ] The extension host logs no errors when the panel is opened
       (Developer Tools → Extension Host log).
 
-## 7. Regression
+## 8. Regression
 
 - [ ] `npm run verify` passes (typecheck, lint, unit tests, build).
 - [ ] `npm test` runs the SecurityManager, NavigationHistory, IPC, frameability,
