@@ -4,6 +4,11 @@
  * This module must never import `vscode`: it is bundled both into the
  * extension host and into the webview client, and it is exercised directly by
  * the unit tests.
+ *
+ * The same rule as in `types.ts` applies here: the repository conventions
+ * would model this boundary with a schema library such as Zod, but the
+ * extension has no runtime dependency, so the parsing of the URLs and of the
+ * allowlist patterns is written by hand and covered by the unit tests.
  */
 
 export type SecurityPolicy = 'strict' | 'open';

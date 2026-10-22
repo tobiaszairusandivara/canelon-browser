@@ -4,6 +4,14 @@
  * Both sides speak the same discriminated unions and both validate every
  * message before acting on it, so a malformed or forged message cannot drive
  * the panel.
+ *
+ * The validators are written by hand on purpose. The repository conventions
+ * model the data of a boundary with a schema library, and Zod would be the
+ * natural choice here, but this extension ships with **no runtime dependency
+ * at all**: a schema library in the bundle would be the only one, and it would
+ * be paid for by every user of the panel. The discriminated unions below fill
+ * the same role, they are checked at runtime by `parseHostMessage` and
+ * `parseWebviewMessage`, and they are unit tested.
  */
 
 export const FRAME_LOAD_TIMEOUT_MS = 12000;
